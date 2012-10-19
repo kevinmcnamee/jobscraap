@@ -4,6 +4,18 @@ require 'open-uri'
 require 'sqlite3'
 require 'debugger'
 
+@db = SQLite3::Database.new('jobs.db')
+
+@db.execute "CREATE TABLE jobs (
+	id INTEGER PRIMARY KEY,
+	job_title TEXT,
+	company_name TEXT,
+	locations TEXT,
+	description TEXT,
+	requirements TEXT,	
+	about TEXT
+);"
+
 print 'what type of job would you like to search: ' 
 search_term = gets.chomp
 search_term = search_term.split.join("+")
@@ -48,11 +60,21 @@ job_links.each do |link|
 	job_content = listings_page.css("div.jobdetail div.description")
 
 	description = job_content[0].text.strip
-	if job_content.length >= 2
-		requirements = job_content[1].text
-	elsif job_content.length > 2
-		about = job_content[2].text
+	requirements = if job_content[2]
+		job_content[1].text.strip
+		else " -- "		
+	end
+	about = if job_content[2]
+		 	job_content[2].text.strip
+		else
+			" -- "
 	end
 
-
+	@db.execute("INSERT INTO jobs (job_title, company_name, locations, description, requirements, about)
+		VALUES (?,?,?,?,?,?)", job_title, company_name, locations, description, requirements, about)
+	
 end	
+
+
+
+
